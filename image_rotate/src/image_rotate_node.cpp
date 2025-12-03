@@ -315,9 +315,12 @@ void ImageRotateNode::onInit()
         image_transport::TransportHints transport_hint(*this,
           "raw");
 
+        auto custom_qos = rclcpp::SystemDefaultsQoS();
+        custom_qos.keep_last(3);
+        rclcpp::SubscriptionOptions sub_options;
+        sub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
+
         if (config_.use_camera_info && config_.input_frame_id.empty()) {
-          auto custom_qos = rclcpp::SystemDefaultsQoS();
-          custom_qos.keep_last(3);
           cam_sub_ = image_transport::create_camera_subscription(
             *this,
             topic_name,
@@ -325,16 +328,16 @@ void ImageRotateNode::onInit()
               &ImageRotateNode::imageCallbackWithInfo, this,
               std::placeholders::_1, std::placeholders::_2),
             transport_hint.getTransport(),
-            custom_qos);
+            custom_qos,
+            sub_options);
         } else {
-          auto custom_qos = rclcpp::SystemDefaultsQoS();
-          custom_qos.keep_last(3);
           img_sub_ = image_transport::create_subscription(
             *this,
             topic_name,
             std::bind(&ImageRotateNode::imageCallback, this, std::placeholders::_1),
             transport_hint.getTransport(),
-            custom_qos);
+            custom_qos,
+            sub_options);
         }
       }
     };
